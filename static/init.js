@@ -9,6 +9,8 @@
     func(func);
 }(function (func) {
     let $doc = document;
+    let cdn_url = window.vite_public_cdn_url;
+    if (cdn_url === undefined) cdn_url = "/static";
     switch (true) {
         /* case !$doc.getElementById("btp_frps_style"):
             let $link = $doc.createElement('link');
