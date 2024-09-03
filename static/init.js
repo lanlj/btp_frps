@@ -9,8 +9,6 @@
     func(func);
 }(function (func) {
     let $doc = document;
-    let cdn_url = window.vite_public_cdn_url;
-    if (cdn_url === undefined) cdn_url = "/static";
     switch (true) {
         /* case !$doc.getElementById("btp_frps_style"):
             let $link = $doc.createElement('link');
@@ -53,12 +51,12 @@
         case !window.CodeMirror:
             let $codeMirror = $doc.createElement("script");
             $codeMirror.setAttribute("type", "text/javascript");
-            $codeMirror.setAttribute("src", cdn_url + "/codemirror/lib/codemirror.js");
+            $codeMirror.setAttribute("src", "/static/codemirror/lib/codemirror.js");
             $codeMirror.addEventListener("load", function () {
                 $codeMirror.remove();
                 let $link = $doc.createElement("link");
                 $link.setAttribute("rel", "stylesheet");
-                $link.setAttribute("href", cdn_url + "/codemirror/lib/codemirror.css");
+                $link.setAttribute("href", "/static/codemirror/lib/codemirror.css");
                 $doc.head.append($link);
                 func(func);
             });
