@@ -139,8 +139,8 @@ new Vue({
         },
         showHidePwd(event) {
             const t = event.currentTarget;
-            const className = ['glyphicon-eye-open', 'glyphicon-eye-close'];
-            const hasClass = t.classList.contains('glyphicon-eye-open');
+            const className = ['glyphicon-eye-close', 'glyphicon-eye-open'];
+            const hasClass = t.classList.contains('glyphicon-eye-close');
             t.parentElement.firstElementChild.type = hasClass ? 'text' : 'password';
             t.classList.replace(className[+!hasClass], className[+hasClass]);
         },

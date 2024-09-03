@@ -49,7 +49,7 @@
                     <span class="tname">鉴权令牌</span>
                     <div class="info-r">
                         <input class="bt-input-text mr5" placeholder="12345678" style="width:230px;padding-inline-end:25px" type="password" v-model="config.authToken">
-                        <i class="glyphicon glyphicon-eye-open" style="left:-28px;cursor:pointer" v-on:click="showHidePwd"></i>
+                        <i class="glyphicon glyphicon-eye-close" style="left:-28px;cursor:pointer" title="显示密码" v-on:click="showHidePwd"></i>
                     </div>
                 </div>
                 <div class="line">
@@ -150,7 +150,7 @@
                     <span class="tname">验证密码</span>
                     <div class="info-r">
                         <input class="bt-input-text mr5" placeholder="admin" style="width:230px;padding-inline-end:25px" type="password" v-model="config.dashboardPwd">
-                        <i class="glyphicon glyphicon-eye-open" style="left:-28px;cursor:pointer" v-on:click="showHidePwd"></i>
+                        <i class="glyphicon glyphicon-eye-close" style="left:-28px;cursor:pointer" title="显示密码" v-on:click="showHidePwd"></i>
                     </div>
                 </div>
                 <div class="line">
