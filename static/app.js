@@ -98,19 +98,18 @@ new Vue({
         config: {
             bindAddr: '0.0.0.0',
             bindPort: 7000,
-            bindUdpPort: 7001,
             kcpBindPort: 7000,
-            token: '',
+            authToken: '',
 
+            // tcpmuxHTTPConnectPort: 1337,
             proxyBindAddr: '',
-            logFile: '',
+            // logTo: '',
             logLevel: 'info',
-            disableLogColor: true,
+            disablePrintColor: true,
             logMaxDays: '',
             heartbeatTimeout: '',
             maxPoolCount: '',
             maxPortsPerClient: '',
-            tcpMux: true,
 
             dashboardAddr: '',
             dashboardPort: '',
@@ -118,10 +117,10 @@ new Vue({
             dashboardPwd: '',
             // assetsDir: '',
 
-            subdomainHost: '',
-            vhostHttpPort: '',
-            vhostHttpsPort: '',
-            vhostHttpTimeout: '',
+            subDomainHost: '',
+            vhostHTTPPort: '',
+            vhostHTTPSPort: '',
+            vhostHTTPTimeout: '',
             // custom404Page: '/www/server/panel/plugin/btp_frps/conf/404.html',
             custom404Page: '',
             enabledCustom404Page: false,
@@ -138,16 +137,12 @@ new Vue({
         change(value) {
             this.current = value;
         },
-        showPwd(event) {
+        showHidePwd(event) {
             const t = event.currentTarget;
-            switch (t.id) {
-                case 'showT':
-                    document.getElementById('token').type = t.checked ? 'text' : 'password';
-                    break;
-                case 'showDP':
-                    document.getElementById('dashboardPwd').type = t.checked ? 'text' : 'password';
-                    break;
-            }
+            const className = ['glyphicon-eye-open', 'glyphicon-eye-close'];
+            const hasClass = t.classList.contains('glyphicon-eye-open');
+            t.parentElement.firstElementChild.type = hasClass ? 'text' : 'password';
+            t.classList.replace(className[+!hasClass], className[+hasClass]);
         },
         compareVersion(version1, version2) {
             version1 = version1 || '';
@@ -580,84 +575,19 @@ new Vue({
             });
         },
         custom404Page() {
-            const t = this;
-            if (!window.openEditorView) {
-                window.OnlineEditFile(0, t.config.custom404Page);
-            } else {
-                if (!window.ace) {
-                    window.__btpFrpsMsgId = layer.msg("正在加载编辑器，请稍等 ...", {
-                        icon: 16,
-                        time: 0,
-                        shade: 0.3
-                    });
-                }
-                t.openWithAce();
+            if (!window._OnlineEditFile) {
+                let func = window.OnlineEditFile.toString();
+                func = func.replace(/OnlineEditFile\((.*)\)/g, '_OnlineEditFile($1)');
+                func = func.replace(/encodeURIComponent/g, '');
+                let funcBody = func.match(/{([\s\S]+)}/)[1];
+                funcBody = funcBody.substr(0, funcBody.length - 6) + "if(cb&&typeof cb==='function'){cb()}\n" + funcBody.substr(-6);
+                window._OnlineEditFile = new Function(func.match(/\(([^)]+)\)/)[1] + ', cb', funcBody);
             }
-        },
-        openWithAce() {
-            const t = this;
-            const $doc = document;
-            switch (true) {
-                case !window.ace:
-                    const $ace = $doc.createElement("script");
-                    $ace.setAttribute("type", "text/javascript");
-                    $ace.setAttribute("src", "/static/ace/ace.js");
-                    $ace.addEventListener("load", function () {
-                        $ace.remove();
-                        const $aceExtra = $doc.createElement("script");
-                        $aceExtra.setAttribute("type", "text/javascript");
-                        $aceExtra.setAttribute("src", "/static/ace/ext-language_tools.js");
-                        $aceExtra.addEventListener("load", function () {
-                            $aceExtra.remove();
-                            t.openWithAce();
-                        });
-                        $doc.head.append($aceExtra);
-                    });
-                    $doc.head.append($ace);
-                    break;
-
-                case !$doc.querySelector('#aceTmplate'):
-                    const $aceTmplate = $doc.createElement("script");
-                    $aceTmplate.setAttribute("type", "text/template");
-                    $aceTmplate.setAttribute("id", "aceTmplate");
-                    axios.get('/files').then((response) => {
-                        if (response.status === 200) {
-                            const matches = response.data.match(/aceTmplate[^>]*>([\s\S]+?)<\/script>/);
-                            if (matches) {
-                                $aceTmplate.innerHTML = matches[1];
-                            }
-                        }
-                        t.openWithAce();
-                    }).catch((error) => {
-                        t.openWithAce();
-                        console.error(error);
-                    });
-                    $doc.body.append($aceTmplate);
-                    break;
-
-                case !window.openEditorViewModeModified:
-                    // 打开后在插件设置框后面，需要进行一下修改
-                    let func = window.openEditorView.toString();
-                    func = func.replace('openEditorView', '');
-                    func = func.replace(/zIndex\s*:[^,]+,/, '');
-                    // func = func.replace(/layer\.closeAll\(\)/g, 'layer.close(indexs)');
-                    // eval('window.openEditorViewModeModified = ' + func);
-                    window.openEditorViewModeModified = new Function(func.match(/\(([^\)]+)\)/)[1], func.match(/\{([\s\S]+)\}/)[1]);
-                    t.openWithAce();
-                    break;
-
-                default:
-                    if (window.__btpFrpsMsgId) {
-                        layer.close(window.__btpFrpsMsgId);
-                        window.__btpFrpsMsgId = null;
-                    }
-                    if (!$doc.querySelector('#aceTmplate').innerHTML) {
-                        window.OnlineEditFile(0, t.config.custom404Page);
-                    } else {
-                        // window.aceEditor.pathAarry = [];
-                        window.openEditorViewModeModified(0, t.config.custom404Page);
-                    }
-            }
+            window._OnlineEditFile(0, this.config.custom404Page, function () {
+                const codeMirrorDiv = document.getElementsByClassName("CodeMirror").item(0);
+                codeMirrorDiv.style.top = '10px';
+                codeMirrorDiv.style.height = (parseFloat(codeMirrorDiv.style.height) - 20) + 'px';
+            });
         },
         uploadFile() {
             const t = this;
