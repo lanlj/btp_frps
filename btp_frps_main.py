@@ -13,7 +13,7 @@ from BTPanel import cache
 
 pluginPath = "/www/server/panel/plugin/btp_frps"
 frpsPath = pluginPath + '/bin/frps'
-frpsIniPath = pluginPath + '/conf/frps.ini'
+frpsCfgPath = pluginPath + '/conf/frps.toml'
 os.chdir("/www/server/panel")
 sys.path.append("class/")
 
@@ -83,13 +83,13 @@ class btp_frps_main():
     def verify(self, get):
         try:
             data = json.loads(get['json'])
-            frpsIni = public.ReadFile(frpsIniPath, mode='r')
-            frpsIni = re.sub(r'# EXTRA-START(.*)# EXTRA-END\n', '', frpsIni, flags=re.DOTALL)
-            frpsIniTmp = frpsIni[:9] + '# EXTRA-START\n' + data['extraCfg'] + '\n# EXTRA-END\n' + frpsIni[9:]
-            frpsIniTmpPath = pluginPath + '/conf/frps_tmp.ini'
-            public.WriteFile(frpsIniTmpPath, frpsIniTmp, mode='w+')
-            success, failed = public.ExecShell(frpsPath + ' verify -c ' + frpsIniTmpPath)
-            os.system('rm -rf ' + frpsIniTmpPath)
+            frpsCfg = public.ReadFile(frpsCfgPath, mode='r')
+            frpsCfg = re.sub(r'# EXTRA-START(.*)# EXTRA-END\n', '', frpsCfg, flags=re.DOTALL)
+            frpsCfgTmp = '# EXTRA-START\n' + data['extraCfg'] + '\n# EXTRA-END\n' + frpsCfg
+            frpsCfgTmpPath = pluginPath + '/conf/frps_tmp.toml'
+            public.WriteFile(frpsCfgTmpPath, frpsCfgTmp, mode='w+')
+            success, failed = public.ExecShell(frpsPath + ' verify -c ' + frpsCfgTmpPath)
+            os.system('rm -rf ' + frpsCfgTmpPath)
             if 'syntax is ok' not in success.strip():
                 return public.returnMsg(False, success.strip())
             else:
@@ -103,53 +103,60 @@ class btp_frps_main():
             os.system('mkdir -p ' + pluginPath + '/conf')
             public.WriteFile(pluginPath + '/conf/config.json', get['json'], mode='w+')
             config_keys = {
-                "bindAddr": "bind_addr",
-                "bindPort": "bind_port",
-                "bindUdpPort": "bind_udp_port",
-                "kcpBindPort": "kcp_bind_port",
-                "token": "token",
+                "bindAddr": "bindAddr",
+                "bindPort": "bindPort",
+                "kcpBindPort": "kcpBindPort",
+                "authToken": "auth.token",
 
-                "proxyBindAddr": "proxy_bind_addr",
-                # "logFile": "log_file",
-                "logLevel": "log_level",
-                "disableLogColor": "disable_log_color",
-                "logMaxDays": "log_max_days",
-                "heartbeatTimeout": "heartbeat_timeout",
-                "maxPoolCount": "max_pool_count",
-                "maxPortsPerClient": "max_ports_per_client",
-                "tcpMux": "tcp_mux",
+                # "tcpmuxHTTPConnectPort": "tcpmuxHTTPConnectPort",
+                "proxyBindAddr": "proxyBindAddr",
+                # "logTo": "log.to",
+                "logLevel": "log.level",
+                "disablePrintColor": "log.disablePrintColor",
+                "logMaxDays": "log.maxDays",
+                "heartbeatTimeout": "transport.heartbeatTimeout",
+                "maxPoolCount": "transport.maxPoolCount",
+                "maxPortsPerClient": "maxPortsPerClient",
 
-                "dashboardAddr": "dashboard_addr",
-                "dashboardPort": "dashboard_port",
-                "dashboardUser": "dashboard_user",
-                "dashboardPwd": "dashboard_pwd",
-                # "assetsDir": "assets_dir",
+                "dashboardAddr": "webServer.addr",
+                "dashboardPort": "webServer.port",
+                "dashboardUser": "webServer.user",
+                "dashboardPwd": "webServer.password",
+                # "assetsDir": "webServer.assetsDir",
 
-                "subdomainHost": "subdomain_host",
-                "vhostHttpPort": "vhost_http_port",
-                "vhostHttpsPort": "vhost_https_port",
-                "vhostHttpTimeout": "vhost_http_timeout",
-                # "custom404Page": "custom_404_page",
+                "subDomainHost": "subDomainHost",
+                "vhostHTTPPort": "vhostHTTPPort",
+                "vhostHTTPSPort": "vhostHTTPSPort",
+                "vhostHTTPTimeout": "vhostHTTPTimeout",
+                # "custom404Page": "custom404Page",
 
-                # "allowPorts": "allow_ports",
+                # "allowPorts": "allowPorts",
             }
-            config = '[common]\n'
+            config = ''
             if data['extraConfig'] != '':
-                config += '# EXTRA-START\n' + data['extraConfig'] + '\n# EXTRA-END\n'
+                config = '# EXTRA-START\n' + data['extraConfig'] + '\n# EXTRA-END\n'
             for key in config_keys.keys():
                 if str(data[key]) != '':
+                    config_tpl = '%s = %s\n'
+                    if type(data[key]) == str:
+                        config_tpl = '%s = "%s"\n'
                     if type(data[key]) == bool:
                         data[key] = 'true' if data[key] else 'false'
-                    config += '%s = %s\n' % (config_keys[key], data[key])
-            config += 'log_file = %s/temp/frps.log\n' % pluginPath
+                    config += config_tpl % (config_keys[key], data[key])
+            config += 'log.to = "%s/temp/frps.log"\n' % pluginPath
             filename = pluginPath + '/conf/404.html'
             if not os.path.isfile(filename):
                 public.WriteFile(filename, '', mode='w+')
             if data['enabledCustom404Page'] and os.path.getsize(filename) > 0:
-                config += 'custom_404_page = %s\n' % filename
+                config += 'custom404Page = "%s"\n' % filename
             if type(data['allowPorts']) == list and len(data['allowPorts']) > 0:
-                config += 'allow_ports = %s\n' % ','.join(data['allowPorts'])
-            public.WriteFile(frpsIniPath, config, mode='w+')
+                for port in data['allowPorts']:
+                    if type(port) == int:
+                        config += '\n[[allowPorts]]\nsingle = %s\n' % port
+                    else:
+                        ports = port.split('-')
+                        config += '\n[[allowPorts]]\nstart = %s\nend = %s\n' % (ports[0], ports[1])
+            public.WriteFile(frpsCfgPath, config, mode='w+')
             return public.returnMsg(True, '保存成功')
         except ValueError:
             return public.returnMsg(False, '请求错误，请刷新页面重试')
@@ -219,7 +226,7 @@ RestartSec=5s
 ExecStart=%s -c %s
 
 [Install]
-WantedBy=multi-user.target''' % (frpsPath, frpsIniPath)
+WantedBy=multi-user.target''' % (frpsPath, frpsCfgPath)
         # 使用 systemd 管理自启动
         filename = '/etc/systemd/system/btp_frps.service'
         if os.path.isdir('/etc/systemd/system') and not os.path.isfile(filename):
@@ -230,7 +237,7 @@ WantedBy=multi-user.target''' % (frpsPath, frpsIniPath)
             os.system('systemctl enable btp_frps')
             os.system('systemctl start btp_frps')
         else:
-            os.system('nohup %s -c %s &' % (frpsPath, frpsIniPath))
+            os.system('nohup %s -c %s &' % (frpsPath, frpsCfgPath))
         time.sleep(1)
         pid = self.__pid()
         if pid != False:
@@ -257,7 +264,7 @@ WantedBy=multi-user.target''' % (frpsPath, frpsIniPath)
             pid = self.__pid()
             if pid != False:
                 os.system('kill -9 %s' % pid)
-            os.system('nohup %s -c %s &' % (frpsPath, frpsIniPath))
+            os.system('nohup %s -c %s &' % (frpsPath, frpsCfgPath))
             import time
             time.sleep(1)
         return public.returnMsg(True, '重启成功')
