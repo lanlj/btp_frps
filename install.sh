@@ -3,8 +3,11 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 
 install_path=/www/server/panel/plugin/btp_frps
+static_path=/www/server/panel/BTPanel/static/images/soft_ico
 
 Install() {
+  install -m 755 ${install_path}/icon.png ${static_path}/ico-btp_frps.png
+  install -m 755 ${install_path}/icon.svg ${static_path}/ico-btp_frps.svg
   echo 'success'
 }
 
