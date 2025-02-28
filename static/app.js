@@ -302,9 +302,9 @@ new Vue({
         },
         saveExtra() {
             const t = this;
-            let comp_rst = -1;
             if ($.trim(t.config.extraConfig) === '' && t.configBak.extraConfig === '') return layer.msg('内容为空，无需保存！', {icon: 0});
             if (t.config.extraConfig === t.configBak.extraConfig) return layer.msg('内容未更改，无需保存！', {icon: 0});
+            let comp_rst = -1;
             try {
                 comp_rst = t.compareVersion(t.version, "0.37.0");
             } catch (e) {
@@ -404,10 +404,19 @@ new Vue({
             });
             t.api('check').then((response) => {
                 layer.close(msgId);
-                t.installed = response.status === 200 && response.data.status === true
+                t.installed = response.status === 200 && response.data.status === true;
                 if (t.installed) {
                     t.version = response.data.msg.version;
                     t.started = response.data.msg.pid !== false;
+
+                    let comp_rst = -1;
+                    try {
+                        comp_rst = t.compareVersion(t.version, "0.52.0");
+                    } catch (e) {
+                    }
+                    if (!t.started && comp_rst === -1) {
+                        layer.alert('TOML 配置版需程序版本≥0.52.0，若启动失败，请升级版本！', {icon: 0, title: '重要提示'});
+                    }
                 }
                 t.read();
             }).catch((error) => {
@@ -575,19 +584,54 @@ new Vue({
             });
         },
         custom404Page() {
-            if (!window._OnlineEditFile) {
-                let func = window.OnlineEditFile.toString();
-                func = func.replace(/OnlineEditFile\((.*)\)/g, '_OnlineEditFile($1)');
-                func = func.replace(/encodeURIComponent/g, '');
-                let funcBody = func.match(/{([\s\S]+)}/)[1];
-                funcBody = funcBody.substr(0, funcBody.length - 6) + "if(cb&&typeof cb==='function'){cb()}\n" + funcBody.substr(-6);
-                window._OnlineEditFile = new Function(func.match(/\(([^)]+)\)/)[1] + ', cb', funcBody);
+            // if (!window._OnlineEditFile) {
+            //     let func = window.OnlineEditFile.toString();
+            //     func = func.replace(/OnlineEditFile\((.*)\)/g, '_OnlineEditFile($1)');
+            //     func = func.replace(/encodeURIComponent/g, '');
+            //     let funcBody = func.match(/{([\s\S]+)}/)[1];
+            //     funcBody = funcBody.substr(0, funcBody.length - 6) + "if(cb&&typeof cb==='function'){cb()}\n" + funcBody.substr(-6);
+            //     window._OnlineEditFile = new Function(func.match(/\(([^)]+)\)/)[1] + ', cb', funcBody);
+            // }
+            // window._OnlineEditFile(0, this.config.custom404Page, function () {
+            //     const codeMirrorDiv = document.getElementsByClassName("CodeMirror").item(0);
+            //     codeMirrorDiv.style.top = '10px';
+            //     codeMirrorDiv.style.height = (parseFloat(codeMirrorDiv.style.height) - 20) + 'px';
+            // });
+            if (!window.ace) {
+                window.__btpFrpsMsgId = layer.msg("正在加载编辑器，请稍等 ...", {
+                    icon: 16,
+                    time: 0,
+                    shade: 0.3
+                });
             }
-            window._OnlineEditFile(0, this.config.custom404Page, function () {
-                const codeMirrorDiv = document.getElementsByClassName("CodeMirror").item(0);
-                codeMirrorDiv.style.top = '10px';
-                codeMirrorDiv.style.height = (parseFloat(codeMirrorDiv.style.height) - 20) + 'px';
-            });
+            this.openWithAce();
+        },
+        openWithAce() {
+            const t = this;
+            const $doc = document;
+            switch (true) {
+                case !window.ace:
+                    const $ace = $doc.createElement("script");
+                    $ace.setAttribute("type", "text/javascript");
+                    $ace.setAttribute("src", "/static/editor/ace.js");
+                    $ace.addEventListener("load", function () {
+                        $ace.remove();
+                        const $aceExtra = $doc.createElement("script");
+                        $aceExtra.setAttribute("type", "text/javascript");
+                        $aceExtra.setAttribute("src", "/static/editor/ext-language_tools.js");
+                        $aceExtra.addEventListener("load", function () {
+                            $aceExtra.remove();
+                            t.openWithAce();
+                        });
+                        $doc.head.append($aceExtra);
+                    });
+                    $doc.head.append($ace);
+                    break;
+
+                default:
+                    layer.close(window.__btpFrpsMsgId);
+                    window.OnlineEditFile(0, t.config.custom404Page);
+            }
         },
         uploadFile() {
             const t = this;
