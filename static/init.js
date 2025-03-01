@@ -48,20 +48,20 @@
             $doc.head.append($axios);
             break;
 
-        case !window.CodeMirror:
-            let $codeMirror = $doc.createElement("script");
-            $codeMirror.setAttribute("type", "text/javascript");
-            $codeMirror.setAttribute("src", "/static/codemirror/lib/codemirror.js");
-            $codeMirror.addEventListener("load", function () {
-                $codeMirror.remove();
-                let $link = $doc.createElement("link");
-                $link.setAttribute("rel", "stylesheet");
-                $link.setAttribute("href", "/static/codemirror/lib/codemirror.css");
-                $doc.head.append($link);
-                func(func);
-            });
-            $doc.head.append($codeMirror);
-            break;
+        // case !window.CodeMirror:
+        //     let $codeMirror = $doc.createElement("script");
+        //     $codeMirror.setAttribute("type", "text/javascript");
+        //     $codeMirror.setAttribute("src", "/static/codemirror/lib/codemirror.js");
+        //     $codeMirror.addEventListener("load", function () {
+        //         $codeMirror.remove();
+        //         let $link = $doc.createElement("link");
+        //         $link.setAttribute("rel", "stylesheet");
+        //         $link.setAttribute("href", "/static/codemirror/lib/codemirror.css");
+        //         $doc.head.append($link);
+        //         func(func);
+        //     });
+        //     $doc.head.append($codeMirror);
+        //     break;
 
         default:
             let $app = $doc.createElement("script");
