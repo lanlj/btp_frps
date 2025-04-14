@@ -241,7 +241,7 @@
                 </div>
             </div>
             <div class="bt-box" v-show="current === 'extra'">
-                <textarea class="bt-input-text" placeholder="option = value //每行一个配置项" style="line-height:20px; width: 100%; height:300px;" v-model="config.extraConfig"></textarea>
+                <textarea class="bt-input-text" placeholder="option = value //每行一个配置项" style="line-height:20px;width:100%;height:300px;resize:none" v-model="config.extraConfig"></textarea>
                 <div class="line">
                     <button class="btn btn-success btn-sm mr5" v-on:click="saveExtra">保存配置</button>
                     <button class="btn btn-danger btn-sm" v-on:click="clearExtra">清空配置</button>

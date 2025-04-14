@@ -23,14 +23,18 @@ class btp_frps_main():
         if not os.path.isfile(frpsPath):
             return public.returnMsg(False, 'frps 未安装')
 
-        success, failed = public.ExecShell(frpsPath + ' --version')
-        if success.strip() == '':
-            return public.returnMsg(False, 'frps 未安装或无执行权限')
-
-        return public.returnMsg(True, {
-            'version': success.strip(),
-            'pid': self.__pid()
-        })
+        for i in range(2):
+            success, failed = public.ExecShell(frpsPath + ' --version')
+            if success.strip() == '':
+                if i == 0:
+                    os.system('chown root:root ' + frpsPath)
+                    os.system('chmod +x ' + frpsPath)
+                else:
+                    return public.returnMsg(False, 'frps 未安装或无执行权限')
+            return public.returnMsg(True, {
+                'version': success.strip(),
+                'pid': self.__pid()
+            })
 
     def install(self, get):
         taskName = 'frps'

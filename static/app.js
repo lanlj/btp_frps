@@ -229,7 +229,7 @@ new Vue({
                 if (response.status === 200 && typeof response.data === 'object') {
                     if (response.data.status) {
                         if (response.data.msg.version !== t.version) {
-                            return layer.confirm('frps ' + response.data.msg.version + ' 更新说明：<pre>' + response.data.msg.remark + '</pre>如需更新请点击「确定」按钮', (index) => {
+                            return layer.confirm('frps ' + response.data.msg.version + ' 更新说明：<pre style="overflow: auto">' + response.data.msg.remark + '</pre>如需更新请点击「确定」按钮', (index) => {
                                 layer.close(index);
                                 t.install();
                             });
