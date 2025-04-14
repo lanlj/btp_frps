@@ -37,6 +37,7 @@ Uninstall() {
     rm -rf /etc/systemd/system/btp_frps.service
   fi
   rm -rf $install_path
+  rm -rf ${static_path}/ico-btp_frps.*
   echo 'success'
 }
 
