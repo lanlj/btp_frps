@@ -31,10 +31,11 @@ class btp_frps_main():
                     os.system('chmod +x ' + frpsPath)
                 else:
                     return public.returnMsg(False, 'frps 未安装或无执行权限')
-            return public.returnMsg(True, {
-                'version': success.strip(),
-                'pid': self.__pid()
-            })
+            else:
+                return public.returnMsg(True, {
+                    'version': success.strip(),
+                    'pid': self.__pid()
+                })
 
     def install(self, get):
         taskName = 'frps'
